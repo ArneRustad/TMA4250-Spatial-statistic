@@ -6,6 +6,8 @@ path = "C:\\Users\\Lene\\Documents\\Skole\\romlig\\TMA4250-Spatial-statistics"
 
 # Problem 1
 
+#a
+
 #read the data
 
 data.complit = read.delim(url("https://www.math.ntnu.no/emner/TMA4250/2020v/Exercise3/complit.dat"), 
@@ -23,5 +25,20 @@ df.obs
 ggplot(data = df.obs, aes(x = x, y = y, fill = obs)) + geom_tile() + scale_fill_distiller(palette = "Spectral")+ 
   labs(fill = "Seismic value") + ggtitle("Image plot of seismic data") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75))
 ggsave("imageplot_seismic.pdf", width = 5, height = 4, path = path)
+
+
+#b)
+
+phi0 = function(d){
+  return(pnorm(d,0.02, 0.06^2))
+}
+
+phi1 = function(d){
+  return(pnorm(d,0.08, 0.06^2))
+}
+
+sim.posterior.given.unif.prior = function(d){
+  
+}
 
 
