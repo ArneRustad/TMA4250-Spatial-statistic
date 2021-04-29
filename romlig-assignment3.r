@@ -38,7 +38,23 @@ phi1 = function(d){
 }
 
 sim.posterior.given.unif.prior = function(d){
-  
+  p = phi0(d)/(phi1(d) + phi0(d))    # probability for 0
+  u = runif(length(p))
+  realization = ifelse(u<p, 0, 1)
+  grid = expand.grid(x = 1:75, y = 1:75)
+  return(data.frame(grid, realization = factor(realization)))
 }
+
+
+set.seed(1)
+for(i in 1:6){
+  df.real = sim.posterior.given.unif.prior(df.obs$obs)
+  p = ggplot(data = df.real, aes(x = x, y = y, fill = realization)) + geom_tile() + 
+    labs(fill = "Seismic value") + ggtitle("Realisation of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) + scale_fill_discrete(labels = c("Sand - 0", "Shale - 1"))
+  print(p)
+  ggsave(paste("realization",i,".pdf", sep=""), width = 5, height = 4, path = path)
+}
+
+
 
 
