@@ -56,5 +56,17 @@ for(i in 1:6){
 }
 
 
+# expectation plot
 
+sim.expectation = function(d){
+  p = phi1(d)/(phi1(d) + phi0(d))    # probability for 1
+  grid = expand.grid(x = 1:75, y = 1:75)
+  return(data.frame(grid, expectation = p))
+}
+
+df.expectation = sim.expectation(df.obs$obs)
+ggplot(data = df.expectation, aes(x = x, y = y, fill = expectation)) + geom_tile() + 
+  labs(fill = "Seismic value") + ggtitle("Expecatation of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+  scale_fill_distiller(palette = "Spectral", limits = c(0,0.5))
+ggsave("posterior_expectation_map_.pdf", width = 5, height = 4, path = path)
 
