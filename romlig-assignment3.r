@@ -30,11 +30,11 @@ ggsave("imageplot_seismic.pdf", width = 5, height = 4, path = path)
 #b)
 
 phi0 = function(d){
-  return(pnorm(d,0.02, 0.06^2))
+  return(pnorm(d,0.02, 0.06))
 }
 
 phi1 = function(d){
-  return(pnorm(d,0.08, 0.06^2))
+  return(pnorm(d,0.08, 0.06))
 }
 
 sim.posterior.given.unif.prior = function(d){
@@ -50,7 +50,8 @@ set.seed(1)
 for(i in 1:6){
   df.real = sim.posterior.given.unif.prior(df.obs$obs)
   p = ggplot(data = df.real, aes(x = x, y = y, fill = realization)) + geom_tile() + 
-    labs(fill = "Seismic value") + ggtitle("Realisation of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) + scale_fill_discrete(labels = c("Sand - 0", "Shale - 1"))
+    labs(fill = "Lithology") + ggtitle(paste("Realization", i,  "of posterior Mosaic RF")) + theme_minimal() + xlim(c(0,75)) + 
+    ylim(c(0,75)) + scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
   print(p)
   ggsave(paste("realization",i,".pdf", sep=""), width = 5, height = 4, path = path)
 }
@@ -66,8 +67,8 @@ expectation.mosaic.rf = function(d){
 
 df.expectation = expectation.mosaic.rf(df.obs$obs)
 ggplot(data = df.expectation, aes(x = x, y = y, fill = expectation)) + geom_tile() + 
-  labs(fill = "Seismic value") + ggtitle("Expecatation of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
-  scale_fill_distiller(palette = "Spectral", limits = c(0,0.5))
+  labs(fill = "Lithology") + ggtitle("Expectation of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+  scale_fill_distiller(palette = "Spectral")
 ggsave("posterior_expectation_map.pdf", width = 5, height = 4, path = path)
 
 
@@ -82,8 +83,8 @@ var.mosaic.rf = function(d){
 
 df.var = var.mosaic.rf(df.obs$obs)
 ggplot(data = df.var, aes(x = x, y = y, fill = variance)) + geom_tile() + 
-  labs(fill = "Seismic value") + ggtitle("Variance of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
-  scale_fill_distiller(palette = "Spectral", limits = c(0,0.5))
+  labs(fill = "Lithology") + ggtitle("Variance of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+  scale_fill_distiller(palette = "Spectral")
 ggsave("posterior_var_map.pdf", width = 5, height = 4, path = path)
 
 
@@ -97,8 +98,8 @@ get.mmap = function(d){
 }
 
 df.mmap = get.mmap(df.obs$obs)
-df.mmap$mmap
+
 ggplot(data = df.mmap, aes(x = x, y = y, fill = mmap)) + geom_tile() + 
-  labs(fill = "Seismic value") + ggtitle("Maximum marginal posterior predictor") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
-  scale_fill_discrete(labels = c("Sand - 0", "Shale - 1"))
+  labs(fill = "Lithology") + ggtitle("Maximum marginal posterior predictor") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+  scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
 ggsave("mmap_map.pdf", width = 5, height = 4, path = path)
