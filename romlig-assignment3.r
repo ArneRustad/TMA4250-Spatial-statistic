@@ -68,7 +68,7 @@ df.expectation = expectation.mosaic.rf(df.obs$obs)
 ggplot(data = df.expectation, aes(x = x, y = y, fill = expectation)) + geom_tile() + 
   labs(fill = "Seismic value") + ggtitle("Expecatation of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
   scale_fill_distiller(palette = "Spectral", limits = c(0,0.5))
-ggsave("posterior_expectation_map_.pdf", width = 5, height = 4, path = path)
+ggsave("posterior_expectation_map.pdf", width = 5, height = 4, path = path)
 
 
 # variance plot
@@ -82,9 +82,9 @@ var.mosaic.rf = function(d){
 
 df.var = var.mosaic.rf(df.obs$obs)
 ggplot(data = df.var, aes(x = x, y = y, fill = variance)) + geom_tile() + 
-  labs(fill = "Seismic value") + ggtitle("Expecatation of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
-  scale_fill_distiller(palette = "Spectral")
-ggsave("posterior_var_map_.pdf", width = 5, height = 4, path = path)
+  labs(fill = "Seismic value") + ggtitle("Variance of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+  scale_fill_distiller(palette = "Spectral", limits = c(0,0.5))
+ggsave("posterior_var_map.pdf", width = 5, height = 4, path = path)
 
 
 # maximum marginal posterior predictor
@@ -101,4 +101,4 @@ df.mmap$mmap
 ggplot(data = df.mmap, aes(x = x, y = y, fill = mmap)) + geom_tile() + 
   labs(fill = "Seismic value") + ggtitle("Maximum marginal posterior predictor") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
   scale_fill_discrete(labels = c("Sand - 0", "Shale - 1"))
-ggsave("mmap_map_.pdf", width = 5, height = 4, path = path)
+ggsave("mmap_map.pdf", width = 5, height = 4, path = path)
