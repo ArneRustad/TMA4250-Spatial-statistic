@@ -1,6 +1,7 @@
 library(fields)
 library(MASS)
 library(ggplot2)
+library(tidyverse)
 
 path = "C:\\Users\\Lene\\Documents\\Skole\\romlig\\TMA4250-Spatial-statistics"
 
@@ -103,3 +104,24 @@ ggplot(data = df.mmap, aes(x = x, y = y, fill = mmap)) + geom_tile() +
   labs(fill = "Lithology") + ggtitle("Maximum marginal posterior predictor") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
   scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
 ggsave("mmap_map.pdf", width = 5, height = 4, path = path)
+
+
+
+
+grid.small = expand.grid(x = 1:66, y = 1:66)
+
+complit.long = cbind(grid.small, obs = NA)
+
+
+for(y in 1:66){
+  complit.long[(1+(y-1)*66):(y*66),3] = data.complit[(67-y),]
+}
+
+complit.long.df = data.frame(complit.long) 
+complit.long$obs[complit.long$obs == 1]
+
+ggplot(data = complit.long.df, aes(x = x, y = y, fill = factor(obs))) + geom_tile() + 
+  labs(fill = "Lithology") + ggtitle("Maximum marginal posterior predictor") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+  scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
+
+
