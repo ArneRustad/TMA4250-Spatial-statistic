@@ -118,8 +118,10 @@ for(y in 1:66){
   complit.long[(1+(y-1)*66):(y*66),3] = matrix.complit[(67-y),]
 }
 
-ggplot(data = complit.long.df, aes(x = x, y = y, fill = factor(obs))) + geom_tile() + 
-  labs(fill = "Lithology") + ggtitle("Maximum marginal posterior predictor") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
-  scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
+complit.long.df  = data.frame(complit.long)
 
+ggplot(data = complit.long.df, aes(x = x, y = y, fill = factor(obs))) + geom_tile() + 
+  labs(fill = "Lithology") + ggtitle("Observations of the lithology distribution") + theme_minimal() + xlim(c(0,66)) + ylim(c(0,66)) +
+  scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
+ggsave("obs_distribution.pdf", width = 5, height = 4, path = path)
 
