@@ -246,7 +246,7 @@ df.realization.long = wide.to.long(realization)
 ggplot(data = df.realization.long, aes(x = x, y = y, fill = factor(obs))) + geom_tile() + 
   labs(fill = "Lithology") + ggtitle("Observations of the lithology distribution") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
   scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
-ggsave("obs_distribution.pdf", width = 5, height = 4, path = path)
+# this should not be saved
 
 
 ####### convergence plot
@@ -281,3 +281,21 @@ ggplot(df.convergence, aes(x = sweep, y = sand.proportion, col = initial)) + geo
 
 
 ###### plot of posterior realizations
+
+
+plot.posterior.realizations = function(beta.hat, map.obs, n.realizations = 6, n.sweep.initial = 50, n.sweep) {
+  for (i in range) {
+    if (i == 1) {
+      realization.i =   gibbs.sim(beta.hat, map.obs, n.sweep.initial, start = "random")
+    }
+    else {
+      realization.i =   gibbs.sim(beta.hat, map.obs, n.sweep, start = "random", start = realization.i)
+    }
+    df.realization.i = wide.to.long(realization.i)
+    ggplot(data = df.realization.i, aes(x = x, y = y, fill = factor(obs))) + geom_tile() + 
+      labs(fill = "Lithology") + ggtitle("Observations of the lithology distribution") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+      scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
+    ggsave("fill_inn_here.pdf", width = 5, height = 4, path = path)
+}
+
+}
