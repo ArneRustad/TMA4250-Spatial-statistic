@@ -29,11 +29,11 @@ ggsave("imageplot_seismic.pdf", width = 5, height = 4, path = path)
 #b)
 
 phi0 = function(d){
-  return(pnorm(d,0.02, 0.06))
+  return(dnorm(d,0.02, 0.06))
 }
 
 phi1 = function(d){
-  return(pnorm(d,0.08, 0.06))
+  return(dnorm(d,0.08, 0.06))
 }
 
 sim.posterior.given.unif.prior = function(d){
@@ -169,21 +169,31 @@ mmpl.estimator = function(training.image) {
 }
 
 beta.hat = mmpl.estimator(matrix.complit)
+beta.hat
 
 
-View(df.obs)
 map.obs = matrix(NA, nrow = max(df.obs$y), ncol = max(df.obs$x))
 n = max(df.obs$y)
 for (j in 1:nrow(map.obs)) {
   map.obs[j,] = df.obs$obs[df.obs$y == j]
 }
-map.obs
 image.plot(map.obs)
 
-gibbs.sim = function(beta, map.obs, n.sweep = 100) {
+
+# MCMC
+
+gibbs.sim = function(beta, map.obs, n.sweep = 25, start = "random", output = "realization") {
   n = nrow(map.obs)
   n.squared = n^2
-  l = matrix(sample(c(0,1), n.squared, replace=TRUE), ncol = n, nrow = n)
+  if (start == "random") l.initial = sample(c(0,1), n.squared, replace=TRUE)
+  else {
+    if (start == "0") l.initial = rep(0, n.squared)
+    else {
+      if (start == "1") l.initial = rep(1, n.squared)
+      else l.initial = start
+    }
+  }
+  l = matrix(l.initial, ncol = n, nrow = n)
   colnames(l) = 1:n
   rownames(l) = 1:n
   sand.proportion = rep(NA, n.sweep+1)
@@ -192,16 +202,15 @@ gibbs.sim = function(beta, map.obs, n.sweep = 100) {
   for (k in 1:(n.sweep*n.squared)) {
     j = sample(1:n, 1)
     i = sample(1:n, 1)
-    similar.neighbours = (l[ifelse(j == n, 1, j+1),j] == l[j,i]) + (l[ifelse(j == 1, n, j-1), i] == l[j, i]) +
-      (l[j, ifelse(i == n, 1, i+1)] == l[j, i]) + (l[j, ifelse(i == 1, n, i - 1)] == l[j,i])
-    if (l[j,i] == 1) {
-      p = phi1(map.obs[j,i]) * beta^(similar.neighbours) /
-        ( phi0(map.obs[j,i] * beta^(4 - similar.neighbours)) + phi1(map.obs[j, i]) * beta^(similar.neighbours))
-    }
-    else {
-      p = 1 - phi0(map.obs[j,i]) * beta^(similar.neighbours) /
-        ( phi0(map.obs[j,i] * beta^(similar.neighbours)) + phi1(map.obs[j, i]) * beta^(4 - similar.neighbours))
-    }
+    #print(paste((l[ifelse(j == n, 1, j+1),j] == 1), l[ifelse(j == n, 1, j+1),j]))
+    neighbours.equal.1 = (l[ifelse(j == n, 1, j+1),i] == 1) + (l[ifelse(j == 1, n, j-1), i] == 1) +
+      (l[j, ifelse(i == n, 1, i+1)] == 1) + (l[j, ifelse(i == 1, n, i - 1)] == 1)
+    #print(neighbours.equal.1)
+    #print(l[(j-1):(j+1), (i-1):(i+1)])
+    #print(paste("Neigbours=1:", neighbours.equal.1, " phi0:", phi0(map.obs[j,i]), " phi1:", phi1(map.obs[j,i])))
+    p = phi1(map.obs[j,i]) * beta^(neighbours.equal.1) / 
+      ( phi0(map.obs[j,i]) * beta^(4 - neighbours.equal.1) + phi1(map.obs[j, i]) * beta^(neighbours.equal.1))
+    #print(p)
     u = runif(1)
     l[j,i] = ifelse(u < p, 1, 0)
     
@@ -209,40 +218,52 @@ gibbs.sim = function(beta, map.obs, n.sweep = 100) {
       counter.prop = counter.prop + 1
       sand.proportion[counter.prop] = 1 - sum(l) / n.squared
     }
-
+    
   }
-  plot(seq(1,n.sweep+1, 1), sand.proportion)
+  #plot(seq(1,n.sweep+1, 1), sand.proportion)
+  if (output == "convergence") {
+    return (sand.proportion)
+  }
   return(l)
 }
-#image.plot(map.obs)
-realization2 = gibbs.sim(2, map.obs, 100)
-realization2
-image.plot(realization2)
-df.realization.long = as.data.frame(cbind(x = rep(colnames(realization), nrow(realization)),
-                                          y = rep(rownames(realization), each=ncol(realization)),
-                                          obs = c(t(realization))))
 
+realization = gibbs.sim(beta.hat, map.obs, 100)
+
+# function for wide to long format
 wide.to.long = function(m) {
   n = nrow(m)
-  grid = expand.grid(x = n, y = n)
-  m.long = cbind(grid.small, obs = NA)
+  grid = expand.grid(x = 1:n, y = 1:n)
+  m.long = cbind(grid, obs = NA)
   for(y in 1:n){
-    m.long[(1+(y-1)*n):(y*n),3] = m[(n-y+1),]
+    m.long[(1+(y-1)*n):(y*n),3] = m[y,]
   }
   return(data.frame(m.long))
 }
-df.realization.long = wide.to.long(realization))
-image.plot(realization)
-
-ggplot(data = df.realization.long, aes(x = x, y = y, fill = obs)) + geom_tile() #+ 
-  # labs(fill = "Lithology") + ggtitle("Maximum marginal posterior predictor") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
-  # scale_fill_manual(values = c("#3C8EC1", "#DF5452"), labels = c("Sand - 0", "Shale - 1"))
 
 
+df.realization.long = wide.to.long(realization)
 
-image.plot(phi1(map.obs) / phi0(map.obs))
+ggplot(data = df.realization.long, aes(x = x, y = y, fill = factor(obs))) + geom_tile() + 
+  labs(fill = "Lithology") + ggtitle("Observations of the lithology distribution") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+  scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
+ggsave("obs_distribution.pdf", width = 5, height = 4, path = path)
 
-complit.vec = as.vector(complit)
-neighbors = complit[c(66,1:65),] + complit[c(2:66,1),] + complit[,c(2:66,1)] + complit[,c(66,1:65)]
-neighbors.vec = as.vector(neighbors)
-equal.neighbors = complit.vec*neighbors.vec+(1-complit.vec)*(4-neighbors.vec)
+
+####### convergence plot
+
+n.sweep = 50
+df.convergence = data.frame(sweep = seq(0,n.sweep), 
+                            sand.proportion = gibbs.sim(beta.hat, map.obs, n.sweep,
+                                                              start = "random", output = "convergence"),
+                            initial = "Uniform random")
+df.convergence = rbind(df.convergence,
+                       data.frame(sweep = seq(0,n.sweep),
+                                  sand.proportion = gibbs.sim(beta.hat, map.obs, n.sweep,
+                                            start = "0", output = "convergence"),
+                                  initial = "All sand"))
+df.convergence = rbind(df.convergence,
+                       data.frame(sweep = seq(0,n.sweep),
+                                  sand.proportion = gibbs.sim(beta.hat, map.obs, n.sweep,
+                                            start = "1", output = "convergence"),
+                                  initial = "All shale"))
+ggplot(df.convergence, aes(x = sweep, y = sand.proportion, col = initial)) + geom_line()
