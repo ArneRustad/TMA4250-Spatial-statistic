@@ -185,15 +185,18 @@ image.plot(map.obs)
 gibbs.sim = function(beta, map.obs, n.sweep = 25, start = "random", output = "realization") {
   n = nrow(map.obs)
   n.squared = n^2
-  if (start == "random") l.initial = sample(c(0,1), n.squared, replace=TRUE)
+  if (length(start) > 1) l = start
   else {
-    if (start == "0") l.initial = rep(0, n.squared)
+    if (start == "random") l.initial = sample(c(0,1), n.squared, replace=TRUE)
     else {
-      if (start == "1") l.initial = rep(1, n.squared)
-      else l.initial = start
+      if (start == "0") l.initial = rep(0, n.squared)
+      else {
+        if (start == "1") l.initial = rep(1, n.squared)
+        else stop("Error: wrong start parameter entered")
+      }
     }
+    l = matrix(l.initial, ncol = n, nrow = n)
   }
-  l = matrix(l.initial, ncol = n, nrow = n)
   colnames(l) = 1:n
   rownames(l) = 1:n
   sand.proportion = rep(NA, n.sweep+1)
@@ -284,18 +287,53 @@ ggplot(df.convergence, aes(x = sweep, y = sand.proportion, col = initial)) + geo
 
 
 plot.posterior.realizations = function(beta.hat, map.obs, n.realizations = 6, n.sweep.initial = 50, n.sweep) {
-  for (i in range) {
+  for (i in 1:n.realizations) {
     if (i == 1) {
       realization.i =   gibbs.sim(beta.hat, map.obs, n.sweep.initial, start = "random")
     }
     else {
-      realization.i =   gibbs.sim(beta.hat, map.obs, n.sweep, start = "random", start = realization.i)
+      realization.i =   gibbs.sim(beta.hat, map.obs, n.sweep, start = realization.i)
     }
     df.realization.i = wide.to.long(realization.i)
-    ggplot(data = df.realization.i, aes(x = x, y = y, fill = factor(obs))) + geom_tile() + 
-      labs(fill = "Lithology") + ggtitle("Observations of the lithology distribution") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+    p = ggplot(data = df.realization.i, aes(x = x, y = y, fill = factor(obs))) + geom_tile() + 
+      labs(fill = "Lithology") + ggtitle("Realizations from the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
       scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
-    ggsave("fill_inn_here.pdf", width = 5, height = 4, path = path)
+    print(p)
+    #ggsave("fill_inn_here.pdf", width = 5, height = 4, path = path)
+  }
 }
 
+plot.posterior.realizations(beta.hat, map.obs, n.sweep.initial = 50, n.sweep = 25)
+
+
+####### get probability map of posterior realizations
+
+
+probability.posterior.realizations = function(beta.hat, map.obs, n.realizations = 20, n.sweep.initial = 50, n.sweep) {
+  prob.map = matrix(0, ncol = ncol(map.obs), nrow = nrow(map.obs))
+  for (i in 1:n.realizations) {
+    print(paste(i, "av", n.realizations))
+    if (i == 1) {
+      realization.i = gibbs.sim(beta.hat, map.obs, n.sweep.initial, start = "random")
+
+    }
+    else {
+      realization.i = gibbs.sim(beta.hat, map.obs, n.sweep, start = realization.i)
+    }
+    prob.map = prob.map + realization.i
+  }
+  return (prob.map / n.realizations)
 }
+
+######################### change n.realizations to 100 when plotting for overleaf
+prob.map = probability.posterior.realizations(beta.hat, map.obs, n.realizations = 20, n.sweep.initial = 50, n.sweep = 25)
+prob.map.long = wide.to.long(prob.map)
+ggplot(data = prob.map.long, aes(x = x, y = y, fill = obs)) + geom_tile() + scale_fill_distiller(palette = "Spectral")+ 
+  labs(fill = "Lithology") + ggtitle("Expectation plot of the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75))
+
+ggplot(data = prob.map.long, aes(x = x, y = y, fill = obs * (1 - obs))) + geom_tile() + scale_fill_distiller(palette = "Spectral")+ 
+  labs(fill = "Lithology") + ggtitle("Variance plot of the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75))
+
+ggplot(data = prob.map.long, aes(x = x, y = y, fill = factor(ifelse(obs >= 0.5, 1, 0)))) + geom_tile() + 
+  labs(fill = "Lithology") + ggtitle("MMAP plot of the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+  scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
