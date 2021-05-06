@@ -250,12 +250,22 @@ ggsave("obs_distribution.pdf", width = 5, height = 4, path = path)
 
 
 ####### convergence plot
-
-n.sweep = 50
+set.seed(1)
+n.sweep = 10
 df.convergence = data.frame(sweep = seq(0,n.sweep), 
                             sand.proportion = gibbs.sim(beta.hat, map.obs, n.sweep,
                                                               start = "random", output = "convergence"),
-                            initial = "Uniform random")
+                            initial = "Uniform random 1")
+df.convergence = rbind(df.convergence,
+                       data.frame(sweep = seq(0,n.sweep),
+                                  sand.proportion = gibbs.sim(beta.hat, map.obs, n.sweep,
+                                                              start = "random", output = "convergence"),
+                                  initial = "Uniform random 2"))
+df.convergence = rbind(df.convergence,
+                       data.frame(sweep = seq(0,n.sweep),
+                                  sand.proportion = gibbs.sim(beta.hat, map.obs, n.sweep,
+                                                              start = "random", output = "convergence"),
+                                  initial = "Uniform random 3"))
 df.convergence = rbind(df.convergence,
                        data.frame(sweep = seq(0,n.sweep),
                                   sand.proportion = gibbs.sim(beta.hat, map.obs, n.sweep,
@@ -266,4 +276,8 @@ df.convergence = rbind(df.convergence,
                                   sand.proportion = gibbs.sim(beta.hat, map.obs, n.sweep,
                                             start = "1", output = "convergence"),
                                   initial = "All shale"))
-ggplot(df.convergence, aes(x = sweep, y = sand.proportion, col = initial)) + geom_line()
+ggplot(df.convergence, aes(x = sweep, y = sand.proportion, col = initial)) + geom_line() + ylab("Proportion of sand") + xlab("Sweep")
+
+
+
+###### plot of posterior realizations
