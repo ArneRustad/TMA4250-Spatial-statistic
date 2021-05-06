@@ -16,9 +16,7 @@ data.complit = read.delim(url("https://www.math.ntnu.no/emner/TMA4250/2020v/Exer
 data.seismic = read.delim(url("https://www.math.ntnu.no/emner/TMA4250/2020v/Exercise3/seismic.dat"), 
                           header = FALSE , sep ="\t", col.names = c("seismic"))
 
-image.plot()
-
-matrix.seismic = data.matrix(seismic.data)
+matrix.seismic = data.matrix(data.seismic)
 grid = expand.grid(x = 1:75, y = 1:75)
 df.obs = data.frame(grid, obs = data.seismic$seismic)
 df.obs
@@ -123,3 +121,126 @@ ggplot(data = complit.long.df, aes(x = x, y = y, fill = factor(obs))) + geom_til
   scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
 
 
+
+## pseudo likelihood inference
+
+mmpl.estimator = function(training.image) {
+  count.similar = matrix(0, ncol = ncol(training.image), nrow = nrow(training.image))
+  count.different = matrix(0, ncol = ncol(training.image), nrow = nrow(training.image))
+  for (i in 1:nrow(training.image)) {
+    for (j in 1:ncol(training.image)) {
+      if (i + 1 <= 66) {
+        if (training.image[i,j] == training.image[i+1,j]) count.similar[i,j] = count.similar[i,j] + 1
+        else count.different[i,j] = count.different[i,j] + 1
+      }
+      if (i - 1 >= 1) {
+        if (training.image[i,j] == training.image[i-1,j]) count.similar[i,j] = count.similar[i,j] + 1
+        else count.different[i,j] = count.different[i,j] + 1
+      }
+      if (j + 1 <= 66) {
+        if (training.image[i,j] == training.image[i,j+1]) count.similar[i,j] = count.similar[i,j] + 1
+        else count.different[i,j] = count.different[i,j] + 1
+      }
+      if (j - 1 >= 1) {
+        if (training.image[i,j] == training.image[i,j-1]) count.similar[i,j] = count.similar[i,j] + 1
+        else count.different[i,j] = count.different[i,j] + 1
+      }
+    }
+  }
+  count.similar.long = as.vector(count.similar)
+  count.different.long = as.vector(count.different)
+  
+  mpl = function(beta, count.similar.long, count.different.long) {
+    return(sum(count.similar.long * log(beta) - log(beta^(count.similar.long) + beta^(count.different.long) ) ))
+  }
+  #beta.hat = optim(1.2, fn = mpl, gr = NULL, training.image)
+  
+  mpl(1, count.similar.long, count.different.long)
+  beta.hat = optim(1.2, fn = mpl, gr = NULL, method = "Brent",
+                   count.similar.long, count.different.long,
+                   lower = 1, upper = 1e10,
+                   control = list(fnscale = -1))
+  print(beta.hat$value)
+  print(mpl(3, count.similar.long, count.different.long))
+  print(mpl(4, count.similar.long, count.different.long))
+  return(beta.hat$par)
+}
+
+beta.hat = mmpl.estimator(matrix.complit)
+
+
+View(df.obs)
+map.obs = matrix(NA, nrow = max(df.obs$y), ncol = max(df.obs$x))
+n = max(df.obs$y)
+for (j in 1:nrow(map.obs)) {
+  map.obs[j,] = df.obs$obs[df.obs$y == j]
+}
+map.obs
+image.plot(map.obs)
+
+gibbs.sim = function(beta, map.obs, n.sweep = 100) {
+  n = nrow(map.obs)
+  n.squared = n^2
+  l = matrix(sample(c(0,1), n.squared, replace=TRUE), ncol = n, nrow = n)
+  colnames(l) = 1:n
+  rownames(l) = 1:n
+  sand.proportion = rep(NA, n.sweep+1)
+  sand.proportion[1] =  1 - sum(l) / n.squared
+  counter.prop = 1
+  for (k in 1:(n.sweep*n.squared)) {
+    j = sample(1:n, 1)
+    i = sample(1:n, 1)
+    similar.neighbours = (l[ifelse(j == n, 1, j+1),j] == l[j,i]) + (l[ifelse(j == 1, n, j-1), i] == l[j, i]) +
+      (l[j, ifelse(i == n, 1, i+1)] == l[j, i]) + (l[j, ifelse(i == 1, n, i - 1)] == l[j,i])
+    if (l[j,i] == 1) {
+      p = phi1(map.obs[j,i]) * beta^(similar.neighbours) /
+        ( phi0(map.obs[j,i] * beta^(4 - similar.neighbours)) + phi1(map.obs[j, i]) * beta^(similar.neighbours))
+    }
+    else {
+      p = 1 - phi0(map.obs[j,i]) * beta^(similar.neighbours) /
+        ( phi0(map.obs[j,i] * beta^(similar.neighbours)) + phi1(map.obs[j, i]) * beta^(4 - similar.neighbours))
+    }
+    u = runif(1)
+    l[j,i] = ifelse(u < p, 1, 0)
+    
+    if (k %% n.squared == 0) {
+      counter.prop = counter.prop + 1
+      sand.proportion[counter.prop] = 1 - sum(l) / n.squared
+    }
+
+  }
+  plot(seq(1,n.sweep+1, 1), sand.proportion)
+  return(l)
+}
+#image.plot(map.obs)
+realization2 = gibbs.sim(2, map.obs, 100)
+realization2
+image.plot(realization2)
+df.realization.long = as.data.frame(cbind(x = rep(colnames(realization), nrow(realization)),
+                                          y = rep(rownames(realization), each=ncol(realization)),
+                                          obs = c(t(realization))))
+
+wide.to.long = function(m) {
+  n = nrow(m)
+  grid = expand.grid(x = n, y = n)
+  m.long = cbind(grid.small, obs = NA)
+  for(y in 1:n){
+    m.long[(1+(y-1)*n):(y*n),3] = m[(n-y+1),]
+  }
+  return(data.frame(m.long))
+}
+df.realization.long = wide.to.long(realization))
+image.plot(realization)
+
+ggplot(data = df.realization.long, aes(x = x, y = y, fill = obs)) + geom_tile() #+ 
+  # labs(fill = "Lithology") + ggtitle("Maximum marginal posterior predictor") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+  # scale_fill_manual(values = c("#3C8EC1", "#DF5452"), labels = c("Sand - 0", "Shale - 1"))
+
+
+
+image.plot(phi1(map.obs) / phi0(map.obs))
+
+complit.vec = as.vector(complit)
+neighbors = complit[c(66,1:65),] + complit[c(2:66,1),] + complit[,c(2:66,1)] + complit[,c(66,1:65)]
+neighbors.vec = as.vector(neighbors)
+equal.neighbors = complit.vec*neighbors.vec+(1-complit.vec)*(4-neighbors.vec)
