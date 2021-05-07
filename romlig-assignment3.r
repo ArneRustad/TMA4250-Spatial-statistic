@@ -251,7 +251,7 @@ ggsave("obs_distribution.pdf", width = 5, height = 4, path = path)
 
 ####### convergence plot
 set.seed(1)
-n.sweep = 10
+n.sweep = 200
 df.convergence = data.frame(sweep = seq(0,n.sweep), 
                             sand.proportion = gibbs.sim(beta.hat, map.obs, n.sweep,
                                                               start = "random", output = "convergence"),
@@ -276,8 +276,9 @@ df.convergence = rbind(df.convergence,
                                   sand.proportion = gibbs.sim(beta.hat, map.obs, n.sweep,
                                             start = "1", output = "convergence"),
                                   initial = "All shale"))
-ggplot(df.convergence, aes(x = sweep, y = sand.proportion, col = initial)) + geom_line() + ylab("Proportion of sand") + xlab("Sweep")
-
+ggplot(df.convergence, aes(x = sweep, y = sand.proportion, col = initial)) + geom_line() + ylab("Proportion of sand") + xlab("Simulation sweep") +
+  ylab("Proportion of sand") + ggtitle("Convergence plot") + labs(col = "Initial lithology")
+ggsave("convergence-plot.pdf", width = 5, height = 4, path = path)
 
 
 ###### plot of posterior realizations
