@@ -67,7 +67,7 @@ expectation.mosaic.rf = function(d){
 df.expectation = expectation.mosaic.rf(df.obs$obs)
 ggplot(data = df.expectation, aes(x = x, y = y, fill = expectation)) + geom_tile() + 
   labs(fill = "Lithology") + ggtitle("Expectation of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
-  scale_fill_distiller(palette = "Spectral")
+  scale_fill_distiller(palette = "Spectral", limits = c(0,1))
 ggsave("posterior_expectation_map.pdf", width = 5, height = 4, path = path)
 
 
@@ -83,7 +83,7 @@ var.mosaic.rf = function(d){
 df.var = var.mosaic.rf(df.obs$obs)
 ggplot(data = df.var, aes(x = x, y = y, fill = variance)) + geom_tile() + 
   labs(fill = "Lithology") + ggtitle("Variance of posterior Mosaic RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
-  scale_fill_distiller(palette = "Spectral")
+  scale_fill_distiller(palette = "Spectral", limits = c(0,0.25))
 ggsave("posterior_var_map.pdf", width = 5, height = 4, path = path)
 
 
@@ -301,10 +301,10 @@ plot.posterior.realizations = function(beta.hat, map.obs, n.realizations = 6, n.
     }
     df.realization.i = wide.to.long(realization.i)
     p = ggplot(data = df.realization.i, aes(x = x, y = y, fill = factor(obs))) + geom_tile() + 
-      labs(fill = "Lithology") + ggtitle("Realizations from the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+      labs(fill = "Lithology") + ggtitle(paste("Realization", i,  "from the Posterior RF")) + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
       scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
     print(p)
-    #ggsave("fill_inn_here.pdf", width = 5, height = 4, path = path)
+    ggsave(paste("realization",i,".MCMC.pdf", sep=""), width = 5, height = 4, path = path)
   }
 }
 
@@ -335,11 +335,15 @@ prob.map = probability.posterior.realizations(beta.hat, map.obs, n.realizations 
 prob.map.long = wide.to.long(prob.map)
 ggplot(data = prob.map.long, aes(x = x, y = y, fill = obs)) + geom_tile() + scale_fill_distiller(palette = "Spectral")+ 
   labs(fill = "Lithology") + ggtitle("Expectation plot of the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75))
+ggsave("expectation-plot-MCMC.pdf", width = 5, height = 4, path = path)
 
 ggplot(data = prob.map.long, aes(x = x, y = y, fill = obs * (1 - obs))) + geom_tile() + scale_fill_distiller(palette = "Spectral")+ 
   labs(fill = "Lithology") + ggtitle("Variance plot of the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75))
+ggsave("variance-plot-MCMC.pdf", width = 5, height = 4, path = path)
 
 ggplot(data = prob.map.long, aes(x = x, y = y, fill = factor(ifelse(obs >= 0.5, 1, 0)))) + geom_tile() + 
   labs(fill = "Lithology") + ggtitle("MMAP plot of the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
   scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
+ggsave("mmap-plot-MCMC.pdf", width = 5, height = 4, path = path)
+
 >>>>>>> 624198f8a92f3426a94518537fb437e491030b9b
