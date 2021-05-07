@@ -281,7 +281,7 @@ df.convergence = rbind(df.convergence,
                                   initial = "All shale"))
 ggplot(df.convergence, aes(x = sweep, y = sand.proportion, col = initial)) + geom_line() + ylab("Proportion of sand") + xlab("Simulation sweep") +
   ylab("Proportion of sand") + ggtitle("Convergence plot") + labs(col = "Initial lithology")
-ggsave("convergence-plot.pdf", width = 5, height = 4, path = path)
+ggsave("convergence-plot.pdf", width = 5.5, height = 4, path = path)
 
 
 <<<<<<< HEAD
@@ -301,7 +301,7 @@ plot.posterior.realizations = function(beta.hat, map.obs, n.realizations = 6, n.
     }
     df.realization.i = wide.to.long(realization.i)
     p = ggplot(data = df.realization.i, aes(x = x, y = y, fill = factor(obs))) + geom_tile() + 
-      labs(fill = "Lithology") + ggtitle(paste("Realization", i,  "from the Posterior RF")) + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+      labs(fill = "Lithology") + ggtitle(paste("Realization", i,  "of the posterior Makrov RF")) + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
       scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
     print(p)
     ggsave(paste("realization",i,".MCMC.pdf", sep=""), width = 5, height = 4, path = path)
@@ -334,15 +334,15 @@ probability.posterior.realizations = function(beta.hat, map.obs, n.realizations 
 prob.map = probability.posterior.realizations(beta.hat, map.obs, n.realizations = 20, n.sweep.initial = 50, n.sweep = 25)
 prob.map.long = wide.to.long(prob.map)
 ggplot(data = prob.map.long, aes(x = x, y = y, fill = obs)) + geom_tile() + scale_fill_distiller(palette = "Spectral")+ 
-  labs(fill = "Lithology") + ggtitle("Expectation plot of the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75))
+  labs(fill = "Lithology") + ggtitle("Expectation plot of the posterior Markov RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75))
 ggsave("expectation-plot-MCMC.pdf", width = 5, height = 4, path = path)
 
 ggplot(data = prob.map.long, aes(x = x, y = y, fill = obs * (1 - obs))) + geom_tile() + scale_fill_distiller(palette = "Spectral")+ 
-  labs(fill = "Lithology") + ggtitle("Variance plot of the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75))
+  labs(fill = "Lithology") + ggtitle("Variance plot of the posterior Markov RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75))
 ggsave("variance-plot-MCMC.pdf", width = 5, height = 4, path = path)
 
 ggplot(data = prob.map.long, aes(x = x, y = y, fill = factor(ifelse(obs >= 0.5, 1, 0)))) + geom_tile() + 
-  labs(fill = "Lithology") + ggtitle("MMAP plot of the Posterior RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
+  labs(fill = "Lithology") + ggtitle("MMAP plot of the posterior Markov RF") + theme_minimal() + xlim(c(0,75)) + ylim(c(0,75)) +
   scale_fill_manual(values = c("#3C8EC1", "#DF5452"),labels = c("Sand - 0", "Shale - 1"))
 ggsave("mmap-plot-MCMC.pdf", width = 5, height = 4, path = path)
 
